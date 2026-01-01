@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Java Chat App</title>
+    <style>
+        /* 1. RESET & BASICS */
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body {
+            background-color: #2f3136; /* Discord Dark Grey */
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* 2. THE CHAT CONTAINER */
+        .chat-container {
+            width: 100%;
+            max-width: 600px;
+            height: 80vh;
+            background-color: #36393f;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+            overflow: hidden; 
+        }
+
+        /* 3. HEADER */
+        .header {
+            background-color: #202225;
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #202225;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #7289da; /* Discord Blue */
+        }
+
+        /* 4. MESSAGE AREA */
+        #chat-box {
+            flex: 1; 
+            padding: 20px;
+            overflow-y: auto; 
+            display: flex;
+            flex-direction: column;
+            gap: 10px; 
+        }
+
+        /* 5. MESSAGE BUBBLES */
+        .message {
+            max-width: 70%;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            
+            /* Text Wrapping Fixes */
+            word-wrap: break-word;     
+            overflow-wrap: break-word;  
+            word-break: break-word;     
+        }
+
+        /* Style for OTHERS (Left side) */
+        .received {
+            background-color: #40444b;
+            align-self: flex-start; 
+            border-bottom-left-radius: 2px;
+        }
+
+        /* Style for ME (Right side) */
+        .sent {
+            background-color: #7289da;
+            align-self: flex-end; 
+            border-bottom-right-radius: 2px;
+        }
+        
+        /* System Messages */
+        .system { 
+            align-self: center; 
+            font-size: 0.8rem; 
+            color: #ffcc00; /* Gold */
+            background: none; 
+            text-align: center; 
+            margin: 10px 0; 
+        }
+        
+        /* Username Styling */
+        strong {
+            color: #faa61a; /* Gold/Orange */
+            font-size: 0.85rem;
+            display: block;
+            margin-bottom: 2px;
+        }
+
+        /* 6. INPUT AREA */
+        .input-area {
+            background-color: #40444b;
+            padding: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            padding: 10px 15px;
+            border-radius: 20px;
+            border: none;
+            background-color: #2f3136;
+            color: white;
+            outline: none;
+        }
+
+        button {
+            padding: 10px 20px;
+            border-radius: 20px;
+            border: none;
+            background-color: #7289da;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover { background-color: #5b6eae; }
+        button:disabled { background-color: #4f545c; cursor: not-allowed; }
+
+    </style>
+</head>
+<body>
+
+    <div class="chat-container">
+        <div class="header"># general-chat</div>
+        <div id="chat-box"></div>
+        <div class="input-area">
+            <input type="text" id="message-input" placeholder="Type here...">
+            <button id="send-btn" onclick="sendMessage()" disabled>Send</button>
+        </div>
+    </div>
+
+    <script>
+        const socket = new WebSocket('ws://0.tcp.in.ngrok.io:10482');
+        
+        // --- THIS WAS THE MISSING VARIABLE ---
+        let hasSetUsername = false; 
+
+        socket.onopen = function() {
+            addMessage("System: Connected! The first message you send will be set as your Username.", 'system');
+            document.getElementById("send-btn").disabled = false;
+        };
+
+        socket.onmessage = function(event) {
+            const msg = event.data;
+            
+            if (msg.startsWith("System:")) {
+                addMessage(msg, 'system');
+            } else if (msg.includes("|")) {
+                // SPLIT THE DATA: "Batman|Hello" -> ["Batman", "Hello"]
+                const parts = msg.split("|");
+                const senderName = parts[0];
+                const actualText = parts[1];
+                
+                addMessage(actualText, 'received', senderName);
+            } else {
+                addMessage(msg, 'received');
+            }
+        };
+
+        function sendMessage() {
+            const input = document.getElementById('message-input');
+            const message = input.value;
+
+            if (message.trim() !== "" && socket.readyState === WebSocket.OPEN) {
+                
+                if (!hasSetUsername) {
+                    // First message is the username
+                    socket.send(message); 
+                    hasSetUsername = true;
+                    input.placeholder = "Type a message...";
+                    input.value = '';
+                } else {
+                    // Normal chat message
+                    socket.send(message); 
+                    addMessage(message, 'sent');
+                    input.value = '';
+                }
+            }
+        }
+
+        function addMessage(text, type, username = null) {
+            const chatBox = document.getElementById('chat-box');
+            const div = document.createElement('div');
+            
+            div.classList.add('message', type);
+
+            if (username) {
+                // Formatting: Bold Name + Line Break + Message
+                div.innerHTML = `<strong>${username}</strong>${text}`;
+            } else {
+                div.textContent = text;
+            }
+            
+            chatBox.appendChild(div);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+
+        // Allow pressing "Enter" to send
+        document.getElementById("message-input").addEventListener("keypress", function(event) {
+            if (event.key === "Enter") sendMessage();
+        });
+    </script>
+</body>
+</html>
