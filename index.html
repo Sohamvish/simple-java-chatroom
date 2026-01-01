@@ -194,19 +194,30 @@
         function addMessage(text, type, username = null) {
             const chatBox = document.getElementById('chat-box');
             const div = document.createElement('div');
-            
+    
             div.classList.add('message', type);
 
-            if (username) {
-                // Formatting: Bold Name + Line Break + Message
-                div.innerHTML = `<strong>${username}</strong>${text}`;
-            } else {
-                div.textContent = text;
-            }
-            
-            chatBox.appendChild(div);
-            chatBox.scrollTop = chatBox.scrollHeight;
+        if (username) {
+            // SECURE WAY: Create elements individually
+            const strong = document.createElement('strong');
+            strong.textContent = username; // This makes <script> tags harmless text
+        
+            const lineBreak = document.createElement('br');
+        
+            const textNode = document.createTextNode(text);
+
+            // Assemble them safely
+            div.appendChild(strong);
+            div.appendChild(lineBreak);
+            div.appendChild(textNode);
+        } 
+        else {
+            div.textContent = text;
         }
+            
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
 
         // Allow pressing "Enter" to send
         document.getElementById("message-input").addEventListener("keypress", function(event) {
@@ -215,3 +226,4 @@
     </script>
 </body>
 </html>
+
