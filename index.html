@@ -169,7 +169,8 @@
 </div>
 
 <script>
-    const socket = new WebSocket('ws://localhost:5000');
+    //ngrok address (replace with your own)
+    const socket = new WebSocket('ws://0.tcp.in.ngrok.io:10482');
     let myUsername = null;
     let currentPrivateUser = null;
     let isPrivateMaximized = false;
@@ -420,3 +421,4 @@
 </script>
 </body>
 </html>
+
