@@ -76,3 +76,6 @@ It features a split-view interface for simultaneous group and private messaging,
 3.  **Routing:** * `DRAW|...` commands are broadcasted to update the canvas.
     * `PRIV|...` commands are routed to specific client threads.
     * `IMG|...` commands serve Base64 image data.
+  
+#note:
+*To use in your browser, please allow insecure content.*
